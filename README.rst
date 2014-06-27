@@ -13,8 +13,7 @@ To use this project follow these steps:
 #3. Create your "Spiders" corresponding to the sites you want to crawl
 #4. Crawl!
 
-*note: these instructions show creation of a project called "icecream".  You
-should replace this name with the actual name of your project.*
+
 
 1 Working Environment
 ===================
