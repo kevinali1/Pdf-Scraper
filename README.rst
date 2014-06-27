@@ -2,37 +2,26 @@
 Pdf Scraper
 ========================
 
-A django project that scrapes sites for pdf documents
+A django project that crawls websites for pdf documents. A typical use case is a site that publishes reports or announcements in pdf
+format on a frequent basis. This application can crawl the site for new pdf's and record when they were found. The crawl
+engine is based on the excellent Scrapy project which uses the Twisted reactor.
 
 To use this project follow these steps:
 
-#. Create your working environment
-#. Install Requirements
-#. Create the new project using the django-two-scoops template
-#. Install additional dependencies
-#. Use the Django admin to create the project
+#1. Create your working environment
+#2. Install Requirements
+#3. Create your "Spiders" corresponding to the sites you want to crawl
+#4. Crawl!
 
 *note: these instructions show creation of a project called "icecream".  You
 should replace this name with the actual name of your project.*
 
-Working Environment
+1 Working Environment
 ===================
 
 You have several options in setting up your working environment.  We recommend
 using virtualenv to separate the dependencies of your project from your system's
 python environment.  If on Linux or Mac OS X, you can also use virtualenvwrapper to help manage multiple virtualenvs across different projects.
-
-Virtualenv Only
----------------
-
-First, make sure you are using virtualenv (http://www.virtualenv.org). Once
-that's installed, create your virtualenv::
-
-    $ virtualenv --distribute icecream
-
-You will also need to ensure that the virtualenv has the project directory
-added to the path. Adding the project directory will allow `django-admin.py` to
-be able to change settings using the `--settings` flag.
 
 Virtualenv with virtualenvwrapper
 ------------------------------------
@@ -41,54 +30,66 @@ In Linux and Mac OSX, you can install virtualenvwrapper (http://virtualenvwrappe
 which will take care of managing your virtual environments and adding the
 project path to the `site-directory` for you::
 
-    $ mkdir icecream
-    $ mkvirtualenv -a icecream icecream-dev
-    $ cd icecream && add2virtualenv `pwd`
+    $ mkdir pdfscraper
+    $ mkvirtualenv pdfscraper
 
-Using virtualenvwrapper with Windows
-----------------------------------------
 
-TBD
 
-Installing Django
+Installing Requirements
 =================
 
-To install Django in the new virtual environment, run the following command::
-
-    $ pip install django
-
-Creating your project
-=====================
-
-To create a new Django project called '**icecream**' using
-django-twoscoops-project, run the following command::
-
-    $ django-admin.py startproject --template=https://github.com/twoscoops/django-twoscoops-project/archive/master.zip --extension=py,rst,html icecream_project
-    
-For Django 1.5 users, we recommend::
-
-    $ django-admin.py startproject --template=https://github.com/twoscoops/django-twoscoops-project/archive/1.5.zip --extension=py,rst,html icecream_project
-
-Installation of Dependencies
-=============================
-
-Depending on where you are installing dependencies:
-
-In development::
+To install your requirements for local use, run the following::
 
     $ pip install -r requirements/local.txt
 
-For production::
+if `cryptography` fails to compile, you probably need some package dependencies. Run the following::
 
-    $ pip install -r requirements.txt
+    $ sudo apt-get install build-essential libssl-dev libffi-dev python-dev
 
-*note: We install production requirements this way because many Platforms as a
-Services expect a requirements.txt file in the root of projects.*
+
+Create your "Spiders"
+=====================
+
+Fire up your django admin to create your Spiders::
+
+    $ ./manage.py runserver --settings=pdfscraper.settings.<settingsfile>
+
+Navigate to `http://localhost:8000/admin/spiders/spider/` in your favourite browser.
+
+Here is the advanced part. You must specify two important fields to create your Spider.
+
+#1. Allow (or Deny) Rule - specify the regular expression(s) corresponding to your. 
+#2. Spider URLs - Allowed Domain - you must specify the url domain(s) you want to crawl
+#3. Spider URLs - Start Url - you must specify the initial url(s) to visit to begin your crawl
+
+As an example, imagine we wanted to crawl example.com for pdf's. The following would be our fields
+Allow Rule: .+example.com/.+
+Deny Rule: .+\\.flv  # We don't want to crawl flv pages
+Start Url: http://www.example.com/
+Allowed Domain: http://www.example.com/
+
+
+Crawl!
+=============================
+
+Crawling is easy. Just run the following::
+
+    $ ./manage.py scrape --settings=pdfscraper.settings.<settingsfile>
+
+where <settingsfile> can be `local`, `production`, etc.
+
+Once the scrape is complete, you can fire up your django admin to view the results::
+
+    $ ./manage.py runserver --settings=pdfscraper.settings.<settingsfile>
+
+Navigate to `http://localhost:8000/admin/spiders/spider/` in your favourite browser. Check our the SpiderSession objects. 
+These pertain to objects stored to track your scrape activity. Also check out the DataItem objects. These objects contains 
+your pdf links and other very useful metadata.
+
 
 Acknowledgements
 ================
 
-- Many thanks to Randall Degges for the inspiration to write the book and django-skel.
 - All of the contributors_ to this project.
 
-.. _contributors: https://github.com/twoscoops/django-twoscoops-project/blob/master/CONTRIBUTORS.txt
+.. _contributors: https://github.com/Valuehorizon/Pdf-Scraper/blob/master/CONTRIBUTORS.txt
