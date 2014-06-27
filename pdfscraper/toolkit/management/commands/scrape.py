@@ -13,6 +13,7 @@ from django.utils import timezone
 
 # Import Project models
 from spiders.models  import Spider, SpiderUrl, SpiderRule
+from dataitems.models  import DataItem
 from toolkit.toolkit.spiders.spiders import CustomSpider
 from scrapesessions.models import SpiderSession
 
@@ -90,19 +91,21 @@ def scrape_spider(myspider):
     crawler.start()
     
     print "Make logs"
-    log.start()
+    #log.start()
     
     print "Run reactor"
     reactor.run() # the script will block here until the spider_closed signal was sent
     
     end_time = timezone.now()
-    time_taken = round((start_time - end_time).total_seconds() / 60, 4)
+    time_taken = round((end_time - start_time).total_seconds() / 60, 4)
     print "Completed scrape"
     print "Total time: %s minutes " % str(time_taken)       
+    num_data = DataItem.objects.filter(session=new_spider_session).count()
+    print "Number of new pdfs found: " + str(num_data)
     
     # Save spider session
     new_spider_session.time_ended = end_time
-    new_spider_session.save()    
+    new_spider_session.save()
 
 
     
