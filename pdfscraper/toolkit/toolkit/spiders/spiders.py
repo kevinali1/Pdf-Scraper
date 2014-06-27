@@ -2,6 +2,7 @@ from scrapy.spider import Spider
 from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from scrapy.selector import Selector
+import urllib2
 
 # Import Item
 from toolkit.toolkit.items import ToolkitItem
@@ -88,10 +89,23 @@ class CustomSpider(CrawlSpider):
         self.log('Hi, this is an item page!')
         print "Scraping a new page and searching"
         print "URL is " + str(response.url)
-        sel = Selector(response)
+        
+        try:
+            sel = Selector(response)
+        except AttributeError:
+            print "   Possible redirect"
+            response = urllib2.urlopen(response.url)
+            if response.info()['Content-Type'] == 'application/pdf':
+                print "Redirect encountered. Parse appropriately"
+                return self.parse_item_from_redirect(response)
+            else:
+                print "BAD LINK - useless"
+                return []
+        
         sites = []
         for filetype in self.required_filetypes:
             sites += sel.xpath('//a[contains(@href, ".%s")]' % filetype)
+        
         items = []
         for site in sites:
             item = ToolkitItem()
@@ -134,3 +148,32 @@ class CustomSpider(CrawlSpider):
         return items
     
     
+    
+    def parse_item_from_redirect(self, response):
+        self.log('Hi, this is an item page!')
+        print "Scraping a new page (FROM REDIRECT)"
+        print "URL is " + str(response.url)
+        
+        assert(response.info()['Content-Type'] == 'application/pdf')
+        
+        new_title = response.info()['Content-Disposition'].split('filename=')[-1]
+        new_title = new_title.replace('"','').replace("'","")
+        
+        url = response.url
+            
+        # Save to database
+        try:
+            item_duplicate = DataItem.objects.get(link = url,
+                                                  title = new_title)
+        except DataItem.DoesNotExist:
+            new_item = DataItem(spider = self.spidermodels,
+                                session = self.session,
+                                date_scraped = timezone.now(),
+                                link = url,
+                                referrer = response.url,
+                                title = new_title) 
+            new_item.save()
+            return
+       
+        return
+                
